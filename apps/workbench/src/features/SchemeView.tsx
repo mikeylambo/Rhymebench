@@ -1,6 +1,7 @@
-import { useMemo, useState } from 'react';
+import { useState } from 'react';
 import { useStore } from '../lib/store.js';
 import { uid } from '../lib/storage.js';
+import { useAsync } from '../lib/useAsync.js';
 import type { Scheme, SchemeColumn } from '../lib/types.js';
 import { EmptyState } from '../components/ui.js';
 
@@ -80,7 +81,7 @@ export function SchemeView() {
                 col={col}
                 color={LETTER_COLORS[i % LETTER_COLORS.length]}
                 ready={status.ready}
-                search={(q) => engine.search(q, { maxDistance: 0.35, limit: 40 }).map((r) => r.word)}
+                search={(q) => engine.search(q, { maxDistance: 0.35, limit: 40 }).then((rs) => rs.map((r) => r.word))}
                 onChange={(patch) => setColumn(col.id, patch)}
                 onRemove={() => removeColumn(col.id)}
               />
@@ -106,12 +107,13 @@ function SchemeColumnCard({
   col: SchemeColumn;
   color: string;
   ready: boolean;
-  search: (q: string) => string[];
+  search: (q: string) => Promise<string[]>;
   onChange: (patch: Partial<SchemeColumn>) => void;
   onRemove: () => void;
 }) {
   const [q, setQ] = useState(col.query);
-  const suggestions = useMemo(() => (ready && q.trim() ? search(q.trim()).filter((w) => !col.words.includes(w)).slice(0, 18) : []), [q, ready, col.words]);
+  const raw = useAsync(() => (ready && q.trim() ? search(q.trim()) : Promise.resolve([])), [q, ready], [] as string[]);
+  const suggestions = raw.filter((w) => !col.words.includes(w)).slice(0, 18);
 
   return (
     <div className="scheme-col">

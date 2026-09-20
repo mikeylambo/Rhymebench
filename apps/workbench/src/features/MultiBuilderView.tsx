@@ -1,6 +1,7 @@
-import { useMemo, useState } from 'react';
-import type { PhraseCandidate } from '@rhyme/engine';
+import { useState } from 'react';
+import type { MultiResult, PhraseCandidate } from '@rhyme/engine';
 import { useStore } from '../lib/store.js';
+import { useAsync } from '../lib/useAsync.js';
 import { EmptyState, TierHeader, WordChip } from '../components/ui.js';
 
 const BUCKETS: Array<{ key: keyof MultiBuckets; label: string; color: string }> = [
@@ -23,10 +24,14 @@ export function MultiBuilderView({ initial }: { initial?: string }) {
   const [phrase, setPhrase] = useState(initial ?? '');
   const [explore, setExplore] = useState(false);
 
-  const result = useMemo(() => {
-    if (!status.ready || !phrase.trim() || phrase.trim().split(/\s+/).length < 2) return null;
-    return engine.buildMultis(phrase.trim(), { explore, perWord: explore ? 44 : 32, maxResults: 500 });
-  }, [engine, phrase, explore, status.ready]);
+  const result = useAsync<MultiResult | null>(
+    () => {
+      if (!status.ready || !phrase.trim() || phrase.trim().split(/\s+/).length < 2) return Promise.resolve(null);
+      return engine.buildMultis(phrase.trim(), { explore, perWord: explore ? 44 : 32, maxResults: 500 });
+    },
+    [engine, phrase, explore, status.ready],
+    null,
+  );
 
   const run = () => setPhrase(input);
 

@@ -11,3 +11,12 @@ createRoot(document.getElementById('root')!).render(
     </StoreProvider>
   </StrictMode>,
 );
+
+// Register the offline service worker in production only (dev keeps HMR clean).
+if (import.meta.env.PROD && 'serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register(`${import.meta.env.BASE_URL}sw.js`).catch(() => {
+      /* offline shell is a progressive enhancement; ignore failures */
+    });
+  });
+}

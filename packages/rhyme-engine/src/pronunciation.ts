@@ -19,6 +19,9 @@ export interface Pron {
   rimeStart: number;
   /** base vowels in order, no stress digits: the "vowel movement" */
   vowelSpine: string[];
+  /** consonants following each vowel up to the next vowel (base, space-joined),
+   *  aligned with vowelSpine — a syllable's coda, for multi detection */
+  codas: string[];
   /** stress digits of each vowel in order, e.g. [1,0] */
   stressPattern: number[];
   /** number of syllables */
@@ -103,11 +106,19 @@ export function analyze(phones: Phoneme[], source: Pron['source']): Pron {
   const rime = phones.slice(rimeStart);
   const vowelSpine: string[] = [];
   const stressPattern: number[] = [];
+  const codaLists: string[][] = [];
+  let curCoda: string[] | null = null;
   for (const p of phones) {
     if (isVowel(p)) {
       vowelSpine.push(base(p));
       const s = stress(p);
       stressPattern.push(s < 0 ? 0 : s);
+      curCoda = [];
+      codaLists.push(curCoda);
+    } else if (curCoda) {
+      // consonant after a vowel — part of that syllable's coda (onset
+      // consonants, before the first vowel, are intentionally ignored here)
+      curCoda.push(base(p));
     }
   }
   return {
@@ -115,6 +126,7 @@ export function analyze(phones: Phoneme[], source: Pron['source']): Pron {
     rime,
     rimeStart,
     vowelSpine,
+    codas: codaLists.map((c) => c.join(' ')),
     stressPattern,
     count: vowelSpine.length,
     source,

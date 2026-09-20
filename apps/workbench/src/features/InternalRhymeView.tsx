@@ -1,5 +1,7 @@
 import { Fragment, useMemo, useState } from 'react';
+import type { InternalRhymeResult } from '@rhyme/engine';
 import { useStore } from '../lib/store.js';
+import { useAsync } from '../lib/useAsync.js';
 import { EmptyState } from '../components/ui.js';
 
 // Distinct cluster colours (assigned by ranked cluster id).
@@ -12,9 +14,10 @@ export function InternalRhymeView() {
   const [line, setLine] = useState('');
   const [threshold, setThreshold] = useState(0.8);
 
-  const result = useMemo(
-    () => (status.ready && line.trim() ? engine.findInternalRhymes(line, threshold) : null),
+  const result = useAsync<InternalRhymeResult | null>(
+    () => (status.ready && line.trim() ? engine.findInternalRhymes(line, threshold) : Promise.resolve(null)),
     [engine, line, threshold, status.ready],
+    null,
   );
 
   // Map each character range (word) to the colour of the strongest cluster it

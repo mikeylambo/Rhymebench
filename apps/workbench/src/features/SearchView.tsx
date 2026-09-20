@@ -1,7 +1,8 @@
 import { useEffect, useMemo, useState } from 'react';
-import type { RhymeResult } from '@rhyme/engine';
+import type { HomophoneResult, LockedSearchResult, Pron, RhymeResult } from '@rhyme/engine';
 import { useStore } from '../lib/store.js';
 import { useWideSearch } from '../lib/useSearch.js';
+import { useAsync } from '../lib/useAsync.js';
 import { EmptyState, Spinner, TierHeader, WordChip } from '../components/ui.js';
 import { Microscope } from '../components/Microscope.js';
 
@@ -30,16 +31,21 @@ export function SearchView({ word, setWord }: { word: string; setWord: (w: strin
   const [mask, setMask] = useState<boolean[]>([]);
 
   const { results, busy } = useWideSearch(word, status.ready);
-  const pron = useMemo(() => (status.ready && word.trim() ? engine.resolve(word.trim()) : null), [engine, word, status.ready]);
+  const pron = useAsync<Pron | null>(
+    () => (status.ready && word.trim() ? engine.resolve(word.trim()) : Promise.resolve(null)),
+    [engine, word, status.ready],
+    null,
+  );
 
   // reset the lock mask whenever the resolved word changes shape
   useEffect(() => {
     setMask(pron ? new Array(pron.phones.length).fill(false) : []);
   }, [pron]);
 
-  const homophones = useMemo(
-    () => (mode === 'homophones' && status.ready && word.trim() ? engine.findHomophones(word.trim(), 80) : []),
+  const homophones = useAsync<HomophoneResult[]>(
+    () => (mode === 'homophones' && status.ready && word.trim() ? engine.findHomophones(word.trim(), 80) : Promise.resolve([])),
     [engine, word, mode, status.ready],
+    [],
   );
 
   // filter the wide result set by the slider, then group by band
@@ -52,12 +58,16 @@ export function SearchView({ word, setWord }: { word: string; setWord: (w: strin
   const totalShown = TIERS.reduce((n, b) => n + grouped[b].length, 0);
 
   const anyLocked = mask.some(Boolean);
-  const lockResults = useMemo(() => {
-    if (!pron || !anyLocked || !word.trim()) return [];
-    if (lockMode === 'lock') return engine.findByLockedSegments(word.trim(), mask, { limit: 120 });
-    const idx = mask.map((v, i) => (v ? i : -1)).filter((i) => i >= 0);
-    return engine.findBySubstitution(word.trim(), idx, { limit: 120 });
-  }, [engine, word, mask, lockMode, pron, anyLocked]);
+  const lockResults = useAsync<LockedSearchResult[]>(
+    () => {
+      if (!pron || !anyLocked || !word.trim()) return Promise.resolve([]);
+      if (lockMode === 'lock') return engine.findByLockedSegments(word.trim(), mask, { limit: 120 });
+      const idx = mask.map((v, i) => (v ? i : -1)).filter((i) => i >= 0);
+      return engine.findBySubstitution(word.trim(), idx, { limit: 120 });
+    },
+    [engine, word, mask, lockMode, pron, anyLocked],
+    [],
+  );
 
   const toggleMask = (i: number) =>
     setMask((m) => {

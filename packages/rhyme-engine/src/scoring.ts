@@ -98,13 +98,18 @@ export function compareRimes(rimeA: Phoneme[], rimeB: Phoneme[]): RimeComparison
   return { score, exact };
 }
 
-/** Count how many trailing vowels two vowel spines share (by similarity>=0.8). */
-function trailingVowelDepth(a: string[], b: string[]): number {
+/**
+ * How many trailing syllables agree on BOTH vowel and coda (Barsmith's multi
+ * definition). Counting vowels alone would call `money`/`tully` a two-syllable
+ * multi on the strength of the shared AH…IY skeleton, even though N and L have
+ * nothing in common — so a real multi needs the consonants to line up too.
+ */
+function trailingSyllableDepth(a: Pron, b: Pron): number {
   let depth = 0;
-  let i = a.length - 1;
-  let j = b.length - 1;
+  let i = a.vowelSpine.length - 1;
+  let j = b.vowelSpine.length - 1;
   while (i >= 0 && j >= 0) {
-    if (vowelSimilarity(a[i], b[j]) >= 0.8) {
+    if (a.vowelSpine[i] === b.vowelSpine[j] && a.codas[i] === b.codas[j]) {
       depth++;
       i--;
       j--;
@@ -140,7 +145,7 @@ function stressTailMatch(a: number[], b: number[]): number {
  */
 export function scoreCandidate(target: Pron, cand: Pron): CandidateScore {
   const rc = compareRimes(target.rime, cand.rime);
-  const depth = trailingVowelDepth(target.vowelSpine, cand.vowelSpine);
+  const depth = trailingSyllableDepth(target, cand);
   const stressMatch = stressTailMatch(target.stressPattern, cand.stressPattern);
 
   // Blend: the rime dominates; multisyllabic depth and stress refine.

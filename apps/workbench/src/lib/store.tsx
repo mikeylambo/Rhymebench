@@ -4,8 +4,8 @@
  * so every tool reads the same engine instance and the same local data.
  */
 import { createContext, useContext, useEffect, useMemo, useState, type ReactNode } from 'react';
-import { RhymeEngine } from '@rhyme/engine';
 import { load, save, uid } from './storage.js';
+import { EngineClient } from './engineClient.js';
 import type { Family, Pin, Scheme } from './types.js';
 
 interface EngineStatus {
@@ -17,7 +17,7 @@ interface EngineStatus {
 }
 
 interface Store {
-  engine: RhymeEngine;
+  engine: EngineClient;
   status: EngineStatus;
 
   // palette
@@ -39,8 +39,8 @@ interface Store {
 
 const Ctx = createContext<Store | null>(null);
 
-// One engine instance for the whole session.
-const engine = new RhymeEngine();
+// One engine worker for the whole session.
+const engine = new EngineClient();
 let loadStarted = false;
 
 export function StoreProvider({ children }: { children: ReactNode }) {
@@ -61,26 +61,15 @@ export function StoreProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     if (loadStarted) {
-      if (engine.ready) setStatus({ ready: true, progress: 1, message: 'Ready', wordCount: engine.wordCount });
+      // A second mount (StrictMode / HMR) — attach to the already-loading worker.
+      engine.ready.then((wordCount) => setStatus({ ready: true, progress: 1, message: 'Ready', wordCount }));
       return;
     }
     loadStarted = true;
-    (async () => {
-      try {
-        setStatus((s) => ({ ...s, message: 'Fetching pronunciation dictionary…', progress: 0.15 }));
-        const [dict, freq] = await Promise.all([
-          fetch(`${import.meta.env.BASE_URL}data/cmudict.dict`).then((r) => r.text()),
-          fetch(`${import.meta.env.BASE_URL}data/freq.txt`).then((r) => r.text()),
-        ]);
-        setStatus((s) => ({ ...s, message: 'Indexing 135,000 words…', progress: 0.55 }));
-        // yield a frame so the message paints before the synchronous parse
-        await new Promise((res) => setTimeout(res, 30));
-        engine.load(dict, freq);
-        setStatus({ ready: true, progress: 1, message: 'Ready', wordCount: engine.wordCount });
-      } catch (e) {
-        setStatus((s) => ({ ...s, error: String(e), message: 'Failed to load dictionary' }));
-      }
-    })();
+    engine
+      .load(import.meta.env.BASE_URL, (progress, message) => setStatus((s) => ({ ...s, progress, message })))
+      .then((wordCount) => setStatus({ ready: true, progress: 1, message: 'Ready', wordCount }))
+      .catch((e) => setStatus((s) => ({ ...s, error: String(e), message: 'Failed to load dictionary' })));
   }, []);
 
   const value = useMemo<Store>(() => {

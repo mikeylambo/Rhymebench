@@ -55,6 +55,7 @@ const RULES: Rule[] = [
   R('rr', 'R', 2),
   R('cc', 'K', 2),
   R('bb', 'B', 2),
+  R('zz', 'Z', 2),
   // --- vowel digraphs ---
   R('ee', 'IY', 2),
   R('ea', 'IY', 2),
@@ -141,6 +142,13 @@ export function g2p(word: string): Phoneme[] {
       }
     }
 
+    // 'y' as a consonant: word-initial, or before a vowel letter (yes, yap,
+    // beyond). Elsewhere it is the vowel handled by the general table.
+    if (rest[0] === 'y' && (i === 0 || 'aeiou'.includes(rest[1] ?? ''))) {
+      out.push('Y');
+      i += 1;
+      continue;
+    }
     // soft c / g before e, i, y
     if (rest[0] === 'c' && 'eiy'.includes(rest[1] ?? '')) {
       out.push('S');
@@ -156,9 +164,58 @@ export function g2p(word: string): Phoneme[] {
     if (rest === 'e') {
       break;
     }
-    // 'tion' / 'sion'
-    if (rest.startsWith('tion')) { out.push('SH', 'AH', 'N'); i += 4; continue; }
-    if (rest.startsWith('sion')) { out.push('ZH', 'AH', 'N'); i += 4; continue; }
+    // ── high-value suffix / cluster rules (checked before the general table) ──
+    const atEnd = (s: string) => rest === s;
+    const prev = out[out.length - 1];
+    const VOICELESS = new Set(['P', 'T', 'K', 'F', 'S', 'SH', 'CH', 'TH', 'HH']);
+    const SIBILANT = new Set(['S', 'Z', 'SH', 'ZH', 'CH', 'JH']);
+
+    // -tion / -sion / -cion / -cian / -tian  ->  SH AH0 N (sion after a vowel voices)
+    if (rest.startsWith('tion') || rest.startsWith('cion') || rest.startsWith('cian') || rest.startsWith('tian')) {
+      out.push('SH', 'AH', 'N'); i += 4; continue;
+    }
+    if (rest.startsWith('ssion')) { out.push('SH', 'AH', 'N'); i += 5; continue; }
+    if (rest.startsWith('sion')) {
+      const voiced = isVowelBase(prev); // vi-sion (voiced) vs mis-sion (already caught)
+      out.push(voiced ? 'ZH' : 'SH', 'AH', 'N'); i += 4; continue;
+    }
+    // -cious / -tious / -xious -> SH AH0 S ; -cial / -tial -> SH AH0 L
+    if (rest.startsWith('cious') || rest.startsWith('tious')) { out.push('SH', 'AH', 'S'); i += 5; continue; }
+    if (rest.startsWith('xious')) { out.push('K', 'SH', 'AH', 'S'); i += 5; continue; }
+    if (rest.startsWith('cial') || rest.startsWith('tial')) { out.push('SH', 'AH', 'L'); i += 4; continue; }
+    // -ture -> CH ER0 ; -sure -> ZH ER0 (mid or end)
+    if (rest.startsWith('ture')) { out.push('CH', 'ER'); i += 4; continue; }
+    if (rest.startsWith('sure')) { out.push('ZH', 'ER'); i += 4; continue; }
+    // -able / -ible -> AH0 B AH0 L
+    if (rest.startsWith('able') || rest.startsWith('ible')) { out.push('AH', 'B', 'AH', 'L'); i += 4; continue; }
+    // -ous -> AH0 S ; - full/-ful end
+    if (atEnd('ous')) { out.push('AH', 'S'); break; }
+
+    // -ing (word-final) -> IH0 NG
+    if (atEnd('ing')) { out.push('IH', 'NG'); break; }
+    // -ly (word-final) -> L IY0
+    if (atEnd('ly')) { out.push('L', 'IY'); break; }
+    // past-tense -ed (word-final, on a real stem): T after voiceless, IH0 D after
+    // t/d, else D.
+    if (atEnd('ed') && out.length >= 2) {
+      if (prev === 'T' || prev === 'D') out.push('IH', 'D');
+      else if (VOICELESS.has(prev)) out.push('T');
+      else out.push('D');
+      break;
+    }
+    // plural / 3rd-person -s / -es (word-final): IH0 Z after a sibilant, S after
+    // voiceless, else Z.
+    if (atEnd('es') && out.length >= 1) {
+      if (SIBILANT.has(prev)) out.push('IH', 'Z');
+      else if (VOICELESS.has(prev)) out.push('S');
+      else out.push('Z');
+      break;
+    }
+    if (atEnd('s') && out.length >= 1 && !isVowelBase(prev)) {
+      if (SIBILANT.has(prev)) out.push('IH', 'Z');
+      else out.push(VOICELESS.has(prev) ? 'S' : 'Z');
+      break;
+    }
 
     let matched: Rule | null = null;
     for (const rule of RULES) {

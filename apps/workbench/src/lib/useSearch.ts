@@ -24,14 +24,20 @@ export function useWideSearch(query: string, ready: boolean) {
     }
     setBusy(true);
     window.clearTimeout(timer.current);
-    // Debounce so typing stays smooth; the spinner (busy=true) has already
-    // painted by the time this fires. The search itself is synchronous.
+    let alive = true;
+    // Debounce so typing stays smooth; the search runs in the worker so the
+    // main thread never blocks. Stale replies are dropped.
     timer.current = window.setTimeout(() => {
-      const r = engine.search(q, { maxDistance: WIDE, limit: 400 });
-      setResults(r);
-      setBusy(false);
+      engine.search(q, { maxDistance: WIDE, limit: 400 }).then((r) => {
+        if (!alive) return;
+        setResults(r);
+        setBusy(false);
+      });
     }, 200);
-    return () => window.clearTimeout(timer.current);
+    return () => {
+      alive = false;
+      window.clearTimeout(timer.current);
+    };
   }, [query, ready, engine]);
 
   return { results, busy };

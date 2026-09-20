@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-label="Rhyme Workbench">
+  <rect width="512" height="512" rx="112" fill="#050505"/>
+  <!-- sound-space equalizer in the four tier colours -->
+  <g>
+    <rect x="120" y="196" width="46" height="120" rx="23" fill="#4ade80"/>
+    <rect x="196" y="140" width="46" height="232" rx="23" fill="#fb923c"/>
+    <rect x="272" y="168" width="46" height="176" rx="23" fill="#60a5fa"/>
+    <rect x="348" y="212" width="46" height="88" rx="23" fill="#c084fc"/>
+  </g>
+</svg>

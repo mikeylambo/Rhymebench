@@ -262,9 +262,13 @@ export function findByLockedSegments(
 }
 
 /**
- * Sound Substitution: hold everything fixed EXCEPT the phonemes at
- * `substituteIdx`, and return words that differ there while matching the rest.
- * Implemented as the inverse mask of segment locking.
+ * Sound Substitution: hold every phoneme fixed EXCEPT the ones at
+ * `substituteIdx`, and return true minimal pairs — words of the same length
+ * that match the target exactly at every non-substituted position and differ
+ * at (at least one of) the substituted positions. This is the "change one
+ * sound, watch where it leads" tool, so no insertions/deletions are allowed —
+ * only a clean swap. Scans the dictionary directly (a click action, not a
+ * per-keystroke query), which is cheap because the comparison exits early.
  */
 export function findBySubstitution(
   lex: Lexicon,
@@ -274,11 +278,30 @@ export function findBySubstitution(
 ): LockedSearchResult[] {
   const target = lex.resolve(query);
   if (!target) return [];
-  const locked = target.phones.map((_, i) => !substituteIdx.includes(i));
-  const results = findByLockedSegments(lex, query, locked, { ...opts, includeSelf: false });
-  // require that at least one substituted position actually differs
-  return results.filter((r) => {
-    // align and check the substituted slots changed
-    return r.word !== query.toLowerCase().trim();
-  });
+  const limit = opts.limit ?? 200;
+  const qword = query.toLowerCase().trim();
+  const sub = new Set(substituteIdx);
+  const n = target.phones.length;
+  const tbase = target.phones.map(base);
+
+  const out: LockedSearchResult[] = [];
+  for (const [w, cand] of lex.entries()) {
+    if (w === qword) continue;
+    if (cand.phones.length !== n) continue;
+    let ok = true;
+    let changed = false;
+    for (let i = 0; i < n; i++) {
+      const same = base(cand.phones[i]) === tbase[i];
+      if (sub.has(i)) {
+        if (!same) changed = true;
+      } else if (!same) {
+        ok = false;
+        break;
+      }
+    }
+    if (!ok || !changed) continue;
+    out.push(toResult(lex, w, cand, scoreCandidate(target, cand)));
+  }
+  out.sort(byQualityThenCommon);
+  return out.slice(0, limit);
 }

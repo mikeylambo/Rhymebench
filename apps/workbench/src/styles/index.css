@@ -283,3 +283,50 @@ input[type="range"].distance::-webkit-slider-thumb {
 .loader .msg { font-size: 12px; color: var(--ink-dim); }
 
 .kbd { font-family: var(--mono); font-size: 10px; background: var(--bg-panel-2); border: 1px solid var(--line); border-bottom-width: 2px; border-radius: 4px; padding: 1px 5px; color: var(--ink-dim); }
+
+/* ---------- responsive: tablet ---------- */
+@media (max-width: 980px) {
+  .body { grid-template-columns: 62px 1fr; }
+  /* the palette/families rail stacks below the content instead of docking */
+  .sidepanel {
+    grid-column: 1 / -1;
+    border-left: none;
+    border-top: 1px solid var(--line);
+    flex-direction: row;
+    flex-wrap: wrap;
+  }
+  .sidepanel .side-section { flex: 1 1 280px; border-bottom: none; border-right: 1px solid var(--line); }
+}
+
+/* ---------- responsive: phone ---------- */
+@media (max-width: 640px) {
+  .body,
+  .body.no-rail { display: flex; flex-direction: column; min-height: 0; }
+  .main { order: 1; flex: 1 1 auto; padding: 16px 16px 84px; }
+  .sidepanel { order: 2; }
+  /* left rail becomes a fixed bottom tab bar */
+  .rail {
+    order: 3;
+    position: fixed;
+    left: 0; right: 0; bottom: 0;
+    z-index: 20;
+    flex-direction: row;
+    justify-content: space-around;
+    align-items: center;
+    border-right: none;
+    border-top: 1px solid var(--line);
+    padding: 4px 6px;
+    padding-bottom: calc(4px + env(safe-area-inset-bottom, 0px));
+    background: #0a0a0a;
+  }
+  .rail button { width: auto; flex: 1 1 0; height: 44px; }
+  .sidepanel { flex-direction: column; margin-bottom: 60px; }
+  .sidepanel .side-section { flex: none; border-right: none; border-bottom: 1px solid var(--line); }
+  .topbar { padding: 9px 14px; }
+  .brand .tag { display: none; }
+  .view-head h2 { font-size: 18px; }
+  .main-inner { max-width: 100%; }
+  /* wide phrase input etc. never force horizontal page scroll */
+  .scheme-cols { grid-auto-columns: minmax(190px, 78vw); }
+  .field input { font-size: 16px; } /* iOS: >=16px avoids zoom-on-focus */
+}

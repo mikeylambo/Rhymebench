@@ -103,11 +103,42 @@ sounds (IH/IY, S/Z, M/N) score as close.
 Inherits Barsmith's dark "writing-gym" UI system (`src/styles/index.css`,
 token-based) rather than inventing a new design language.
 
+## Offline / PWA
+
+The app is installable and works offline. A service worker (`public/sw.js`,
+registered in production only) runtime-caches the shell, the hashed JS/CSS and
+the data payloads, so from the second visit on it runs with no network — matching
+the local-first, stores-nothing-off-device promise. `public/manifest.webmanifest`
++ `public/icon.svg` make it installable to a home screen.
+
+## Performance — the engine runs in a Web Worker
+
+The engine and the 3.5MB dictionary live in a Web Worker
+(`src/engine.worker.ts`), driven from the main thread through an async proxy
+(`src/lib/engineClient.ts`). The ~1s parse at startup and every query run off
+the main thread, so the UI never janks; the distance slider still filters a
+cached result set client-side for instant re-ranking.
+
+## Responsive
+
+Works from phone width up. Below 640px the left rail becomes a bottom tab bar,
+the layout collapses to a single column with a 16px gutter and no horizontal
+scroll, and the palette stacks beneath the content.
+
+## Tests
+
+`npm run test` (in `packages/rhyme-engine`) builds the engine and runs the
+Node test suite (`test/*.test.mjs`) against the real dictionary. It encodes
+each feature's "done when" bar — tiering, distance monotonicity, that locked
+segments are genuinely preserved, substitution minimal-pairs, homophones,
+multi-builder buckets, and non-adjacent internal-rhyme clusters — plus the G2P
+suffix rules and articulatory scoring.
+
 ## Notes / next steps
 
-- The engine currently runs on the main thread; queries are debounced and the
-  distance slider filters a cached result set, so interaction stays smooth. If
-  query latency ever matters on lower-end machines, the engine is
-  framework-free and drops cleanly into a Web Worker.
 - Barsmith adopts the engine later via a single package import — this repo
   doesn't touch Barsmith's.
+- The slang supplement (`src/slang.ts`) is meant to keep growing as gaps
+  surface; the G2P fallback is a heuristic (good on common suffixes and
+  structure, approximate on vowel quality) — a bigger curated supplement is the
+  higher-leverage improvement over chasing G2P perfection.
