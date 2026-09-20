@@ -1,0 +1,16 @@
+{
+  "name": "rhyme-workbench",
+  "private": true,
+  "version": "0.1.0",
+  "description": "Rhyme Workbench — explore the sound-space around a word or phrase. Sibling to Barsmith, sharing @rhyme/engine.",
+  "type": "module",
+  "workspaces": [
+    "packages/*",
+    "apps/*"
+  ],
+  "scripts": {
+    "dev": "npm run dev --workspace apps/workbench",
+    "build": "npm run build --workspace packages/rhyme-engine && npm run build --workspace apps/workbench",
+    "test": "npm run test --workspace packages/rhyme-engine"
+  }
+}
