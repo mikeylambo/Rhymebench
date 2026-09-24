@@ -60,6 +60,17 @@ npm run test:e2e   # app: builds it, then 11 end-to-end tests in your installed 
 Before a release, see [docs/RELEASE-CHECKLIST.md](docs/RELEASE-CHECKLIST.md) and
 [RELEASE_NOTES.md](RELEASE_NOTES.md).
 
+## Live
+
+**https://rhymebench.vercel.app** — Vercel project `rhymebench` (team
+mikeylambos-projects), configured by `vercel.json`. Deploys are manual from the repo
+root — pushing to GitHub does not deploy:
+
+```bash
+vercel deploy --prod
+cd apps/workbench && E2E_BASE_URL=https://rhymebench.vercel.app npx playwright test
+```
+
 ## Data strategy
 
 Everything the engine needs is bundled with the app — no server calls, no API.
