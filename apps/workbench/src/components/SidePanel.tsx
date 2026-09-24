@@ -29,8 +29,8 @@ export function SidePanel({ goSearch }: { goSearch: (w: string) => void }) {
               {pins.map((p) => (
                 <span key={p.id} className="rword pinned" style={{ paddingRight: 8 }}>
                   <span className={`band-dot ${p.band}`} />
-                  <span style={{ cursor: 'pointer' }} onClick={() => goSearch(p.word)}>{p.word}</span>
-                  <button className="pin" style={{ opacity: 1 }} onClick={() => removePin(p.id)} title="Remove">✕</button>
+                  <button type="button" className="link-btn" onClick={() => goSearch(p.word)} aria-label={`Search ${p.word}`}>{p.word}</button>
+                  <button className="pin" style={{ opacity: 1 }} onClick={() => removePin(p.id)} title="Remove" aria-label={`Remove ${p.word} from palette`}>✕</button>
                 </span>
               ))}
             </div>
@@ -47,12 +47,12 @@ export function SidePanel({ goSearch }: { goSearch: (w: string) => void }) {
           families.map((f) => (
             <div key={f.id} className="fam-item">
               <div className="fam-name">
-                <span style={{ cursor: 'pointer' }} onClick={() => goSearch(f.seed !== 'palette' ? f.seed : f.words[0])}>{f.name}</span>
-                <button className="btn tiny ghost" onClick={() => removeFamily(f.id)}>✕</button>
+                <button type="button" className="link-btn" onClick={() => goSearch(f.seed !== 'palette' ? f.seed : f.words[0])}>{f.name}</button>
+                <button className="btn tiny ghost" onClick={() => removeFamily(f.id)} aria-label={`Delete family ${f.name}`}>✕</button>
               </div>
               <div className="fam-words">
                 {f.words.slice(0, 12).map((w) => (
-                  <span key={w} style={{ cursor: 'pointer', marginRight: 6 }} onClick={() => goSearch(w)}>{w}</span>
+                  <button type="button" key={w} className="link-btn" style={{ marginRight: 6 }} onClick={() => goSearch(w)}>{w}</button>
                 ))}
                 {f.words.length > 12 && <span className="faint">+{f.words.length - 12}</span>}
               </div>

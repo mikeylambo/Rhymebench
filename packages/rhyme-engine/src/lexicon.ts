@@ -1,8 +1,9 @@
 /**
- * The lexicon: owns the CMU dictionary in memory, the fallback chain
- * (CMU -> slang supplement -> rule-based G2P), a frequency ranking used to
- * surface common/usable words first, and the reverse indexes that make rhyme
- * search fast over ~135k words.
+ * The lexicon: owns the pronunciation dictionary in memory (the compact payload
+ * built from CMU by scripts/build-lexicon.mjs, or a raw cmudict.dict), the
+ * fallback chain (dictionary -> slang supplement -> rule-based G2P), a frequency
+ * ranking used to surface common/usable words first, and the reverse indexes
+ * that make rhyme search fast.
  *
  * Every CMU headword is analysed ONCE at load and stored, so queries are pure
  * scoring with no re-parsing.
@@ -11,6 +12,32 @@ import { analyze, parsePhones, rimeKey, type Pron } from './pronunciation.js';
 import { base, isVowel, stress } from './arpabet.js';
 import { g2p } from './g2p.js';
 import { SUPPLEMENT } from './slang.js';
+
+/**
+ * Compact payload encoding (scripts/build-lexicon.mjs): one character per
+ * phoneme, index-aligned with PHONEMES, a vowel followed by its stress digit.
+ * Must match the build script exactly, index for index.
+ */
+const PHONEMES = [
+  'AA', 'AE', 'AH', 'AO', 'AW', 'AY', 'B', 'CH', 'D', 'DH', 'EH', 'ER', 'EY', 'F',
+  'G', 'HH', 'IH', 'IY', 'JH', 'K', 'L', 'M', 'N', 'NG', 'OW', 'OY', 'P', 'R', 'S',
+  'SH', 'T', 'TH', 'UH', 'UW', 'V', 'W', 'Y', 'Z', 'ZH',
+];
+const ALPHABET = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLM';
+const PHONEME_OF = new Map([...ALPHABET].map((c, i) => [c, PHONEMES[i]]));
+export const COMPACT_HEADER = '#rhymebench-lexicon';
+
+/** "Ac0Lq1Dc0w" -> "P AH0 Z IH1 SH AH0 N" */
+function decodePron(enc: string): string {
+  const out: string[] = [];
+  for (let i = 0; i < enc.length; i++) {
+    const ph = PHONEME_OF.get(enc[i]);
+    if (!ph) throw new Error(`lexicon: bad phoneme code "${enc[i]}"`);
+    const next = enc[i + 1];
+    if (next >= '0' && next <= '2') { out.push(ph + next); i++; } else out.push(ph);
+  }
+  return out.join(' ');
+}
 
 /** Key: the base vowel of a word's last stressed vowel (its rhyme anchor). */
 function anchorVowel(phones: string[]): string {
@@ -63,22 +90,51 @@ export class Lexicon {
 
       // index only the primary (first) pronunciation
       if (isVariant || this.prons.has(word)) continue;
-      const phones = parsePhones(phoneStr);
-      const pron = analyze(phones, 'cmu');
-      this.prons.set(word, pron);
-
-      const rk = rimeKey(pron.rime);
-      let set = this.byRime.get(rk);
-      if (!set) this.byRime.set(rk, (set = new Set()));
-      set.add(word);
-
-      const anchor = anchorVowel(phones);
-      let aset = this.byAnchor.get(anchor);
-      if (!aset) this.byAnchor.set(anchor, (aset = new Set()));
-      aset.add(word);
+      this.indexPrimary(word, phoneStr);
     }
     this.size = this.prons.size;
     this.loaded = true;
+  }
+
+  /**
+   * Load the compact payload built by scripts/build-lexicon.mjs — pronunciations,
+   * variants and frequency ranks in one file (see that script for the format).
+   */
+  loadCompact(text: string): void {
+    const lines = text.split('\n');
+    const header = lines[0] ?? '';
+    if (!header.startsWith(COMPACT_HEADER)) throw new Error('lexicon: not a compact payload');
+    const ranks = Number(/ranks=(\d+)/.exec(header)?.[1] ?? 0);
+    for (let i = 1; i < lines.length; i++) {
+      const line = lines[i];
+      if (!line) continue;
+      const [word, encs, r] = line.split(' ');
+      if (!word || !encs) continue;
+      const phoneStrs = encs.split('|').map(decodePron);
+      this.variants.set(word, phoneStrs);
+      if (!this.prons.has(word)) this.indexPrimary(word, phoneStrs[0]);
+      if (r) this.rank.set(word, parseInt(r, 36));
+    }
+    this.rankSize = Math.max(1, ranks || this.rank.size);
+    this.size = this.prons.size;
+    this.loaded = true;
+  }
+
+  /** Analyse a headword's primary pronunciation once and add it to the indexes. */
+  private indexPrimary(word: string, phoneStr: string): void {
+    const phones = parsePhones(phoneStr);
+    const pron = analyze(phones, 'cmu');
+    this.prons.set(word, pron);
+
+    const rk = rimeKey(pron.rime);
+    let set = this.byRime.get(rk);
+    if (!set) this.byRime.set(rk, (set = new Set()));
+    set.add(word);
+
+    const anchor = anchorVowel(phones);
+    let aset = this.byAnchor.get(anchor);
+    if (!aset) this.byAnchor.set(anchor, (aset = new Set()));
+    aset.add(word);
   }
 
   /** Load the compact frequency asset (one word per line, line = rank). */

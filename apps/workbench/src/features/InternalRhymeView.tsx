@@ -5,7 +5,7 @@ import { useAsync } from '../lib/useAsync.js';
 import { EmptyState } from '../components/ui.js';
 
 // Distinct cluster colours (assigned by ranked cluster id).
-const COLORS = ['#4ecb8d', '#6ea8fe', '#f0a63a', '#c07de0', '#ef6f8e', '#48c9c9', '#d4d24e', '#e08a4e'];
+const COLORS = ['#4ade80', '#60a5fa', '#fb923c', '#c084fc', '#f472b6', '#2dd4bf', '#facc15', '#f87171'];
 
 const SAMPLE = 'My lyrics deliver a mirror that shimmers, the sinner considers the figures grow bigger';
 
@@ -58,6 +58,7 @@ export function InternalRhymeView() {
       </div>
 
       <textarea
+        aria-label="A line or bar to analyse"
         className="raw"
         rows={3}
         value={line}
@@ -68,7 +69,7 @@ export function InternalRhymeView() {
         <button className="btn tiny ghost" onClick={() => setLine(SAMPLE)}>Try a sample bar</button>
         <div className="row" style={{ gap: 8 }}>
           <span className="hint">Strictness</span>
-          <input type="range" className="distance" style={{ width: 130 }} min={0.68} max={0.95} step={0.01} value={threshold} onChange={(e) => setThreshold(parseFloat(e.target.value))} />
+          <input type="range" className="distance" aria-label="Strictness" aria-valuetext={threshold.toFixed(2)} style={{ width: 130 }} min={0.68} max={0.95} step={0.01} value={threshold} onChange={(e) => setThreshold(parseFloat(e.target.value))} />
           <span className="hint mono">{threshold.toFixed(2)}</span>
         </div>
       </div>

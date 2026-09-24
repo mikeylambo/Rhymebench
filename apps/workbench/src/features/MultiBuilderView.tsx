@@ -43,10 +43,11 @@ export function MultiBuilderView({ initial }: { initial?: string }) {
       </div>
 
       <div className="field" style={{ marginBottom: 10 }}>
-        <span className="lead">🎛️</span>
+        <span className="lead" aria-hidden="true">🎛️</span>
         <input
           value={input}
           placeholder="Enter a phrase — two or more words"
+          aria-label="Phrase to match"
           onChange={(e) => setInput(e.target.value)}
           onKeyDown={(e) => e.key === 'Enter' && run()}
         />
@@ -55,8 +56,8 @@ export function MultiBuilderView({ initial }: { initial?: string }) {
 
       <div className="row wrap" style={{ justifyContent: 'space-between', marginBottom: 14 }}>
         <div className="chip-toggle">
-          <button className={!explore ? 'on' : ''} onClick={() => setExplore(false)}>Curated</button>
-          <button className={explore ? 'on' : ''} onClick={() => setExplore(true)}>Explore mode</button>
+          <button className={!explore ? 'on' : ''} aria-pressed={!explore} onClick={() => setExplore(false)}>Curated</button>
+          <button className={explore ? 'on' : ''} aria-pressed={explore} onClick={() => setExplore(true)}>Explore mode</button>
         </div>
         {result && (
           <span className="hint">{result.syllables} syllables · {result.total} candidates{explore ? ' · filter relaxed' : ''}</span>

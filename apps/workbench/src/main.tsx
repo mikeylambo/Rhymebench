@@ -2,13 +2,17 @@ import { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';
 import { StoreProvider } from './lib/store.js';
 import App from './App.js';
+import { ErrorBoundary } from './components/ErrorBoundary.js';
 import './styles/index.css';
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
-    <StoreProvider>
-      <App />
-    </StoreProvider>
+    {/* Outermost, so a crash anywhere — the store included — still gets the rescue screen. */}
+    <ErrorBoundary>
+      <StoreProvider>
+        <App />
+      </StoreProvider>
+    </ErrorBoundary>
   </StrictMode>,
 );
 

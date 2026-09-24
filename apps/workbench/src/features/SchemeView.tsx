@@ -6,7 +6,8 @@ import type { Scheme, SchemeColumn } from '../lib/types.js';
 import { EmptyState } from '../components/ui.js';
 
 const LETTERS = ['A', 'B', 'C', 'D', 'E', 'F'];
-const LETTER_COLORS = ['#4ecb8d', '#6ea8fe', '#f0a63a', '#c07de0', '#ef6f8e', '#48c9c9'];
+// Barsmith's tier palette first, then two extras for E/F.
+const LETTER_COLORS = ['#4ade80', '#fb923c', '#60a5fa', '#c084fc', '#f472b6', '#2dd4bf'];
 
 export function SchemeView() {
   const { engine, status, schemes, setSchemes } = useStore();
@@ -70,8 +71,8 @@ export function SchemeView() {
       {active && (
         <>
           <div className="field" style={{ marginBottom: 14, maxWidth: 320 }}>
-            <span className="lead">🏷️</span>
-            <input value={active.name} onChange={(e) => update((s) => ({ ...s, name: e.target.value }))} />
+            <span className="lead" aria-hidden="true">🏷️</span>
+            <input value={active.name} aria-label="Scheme name" onChange={(e) => update((s) => ({ ...s, name: e.target.value }))} />
           </div>
 
           <div className="scheme-cols">
@@ -124,9 +125,10 @@ function SchemeColumnCard({
           style={{ flex: 1, background: 'var(--bg-input)', border: '1px solid var(--line)', borderRadius: 6, padding: '5px 8px', outline: 'none', fontSize: 12 }}
           value={q}
           placeholder="seed word…"
+          aria-label={`Seed word for family ${col.letter}`}
           onChange={(e) => { setQ(e.target.value); onChange({ query: e.target.value }); }}
         />
-        <button className="btn tiny ghost" onClick={onRemove} title="Remove family">✕</button>
+        <button className="btn tiny ghost" onClick={onRemove} title="Remove family" aria-label={`Remove family ${col.letter}`}>✕</button>
       </div>
 
       {col.words.length > 0 && (
@@ -135,7 +137,7 @@ function SchemeColumnCard({
             <span key={w} className="rword pinned" style={{ paddingRight: 8 }}>
               <span className="band-dot" style={{ background: color }} />
               {w}
-              <button className="pin" style={{ opacity: 1 }} onClick={() => onChange({ words: col.words.filter((x) => x !== w) })}>✕</button>
+              <button className="pin" style={{ opacity: 1 }} onClick={() => onChange({ words: col.words.filter((x) => x !== w) })} aria-label={`Remove ${w}`}>✕</button>
             </span>
           ))}
         </div>

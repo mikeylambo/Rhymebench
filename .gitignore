@@ -4,3 +4,9 @@ dist-test/
 *.tsbuildinfo
 .DS_Store
 .vite/
+test-results/
+playwright-report/
+.vercel/
+# secrets: Vite loads *.local env files but they are never committed (vercel link writes a token here)
+.env.local
+.env.*.local

@@ -29,6 +29,12 @@ interface FindRhymesResult {
   homophones: HomophoneResult[];
 }
 
+export interface Definition {
+  /** the word the senses belong to — the base form when the looked-up word is an inflection */
+  word: string;
+  senses: Array<{ pos: string; text: string }>;
+}
+
 type Pending = { resolve: (v: unknown) => void; reject: (e: unknown) => void };
 
 export class EngineClient {
@@ -104,5 +110,7 @@ export class EngineClient {
   getUsefulRhymes(word: string, limit?: number) { return this.call<string[]>('getUsefulRhymes', [word, limit]); }
   commonness(word: string) { return this.call<number>('commonness', [word]); }
   playground(opts: PlaygroundOptions) { return this.call<PlaygroundResult>('playground', [opts]); }
+  /** WordNet definition (falls back to the base form: designed -> design); null if unknown. */
+  define(word: string) { return this.call<Definition | null>('define', [word]); }
   countSyllables(text: string) { return this.call<number>('countSyllables', [text]); }
 }

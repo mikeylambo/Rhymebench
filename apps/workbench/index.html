@@ -2,18 +2,32 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
     <meta name="theme-color" content="#050505" />
-    <meta name="description" content="Rhyme Workbench — explore the sound-space around a word or phrase." />
-    <link rel="manifest" href="./manifest.webmanifest" />
-    <link rel="icon" type="image/svg+xml" href="./icon.svg" />
-    <link rel="apple-touch-icon" href="./icon.svg" />
+    <title>Rhyme Workbench</title>
+    <meta name="description" content="Tap any word in your line and explore its whole sound-space — perfect rhymes, multis, slant and assonance. Offline, on-device, nothing leaves your phone." />
+
+    <link rel="manifest" href="/manifest.webmanifest" />
+    <link rel="icon" type="image/svg+xml" href="/icon.svg" />
+    <link rel="icon" type="image/png" sizes="192x192" href="/icon-192.png" />
+    <link rel="apple-touch-icon" href="/icon-192.png" />
     <meta name="mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-title" content="Rhyme" />
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
-    <title>Rhyme Workbench</title>
+
+    <!-- Share card. Crawlers need absolute URLs: VITE_SITE_URL comes from .env (the deployed origin). -->
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content="Rhyme Workbench" />
+    <meta property="og:description" content="Tap any word in your line and explore its whole sound-space. Offline, on-device." />
+    <meta property="og:image" content="%VITE_SITE_URL%/og-image.png" />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:url" content="%VITE_SITE_URL%/" />
+    <meta name="twitter:card" content="summary_large_image" />
   </head>
   <body>
+    <noscript>Rhyme Workbench needs JavaScript to run.</noscript>
     <div id="root"></div>
     <script type="module" src="/src/main.tsx"></script>
   </body>

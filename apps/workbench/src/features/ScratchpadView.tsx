@@ -35,6 +35,7 @@ export function ScratchpadView() {
       </div>
 
       <textarea
+        aria-label="Scratchpad"
         ref={ref}
         className="raw"
         rows={12}

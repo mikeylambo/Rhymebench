@@ -5,6 +5,7 @@ import { useWideSearch } from '../lib/useSearch.js';
 import { useAsync } from '../lib/useAsync.js';
 import { EmptyState, Spinner, TierHeader, WordChip } from '../components/ui.js';
 import { Microscope } from '../components/Microscope.js';
+import { Definition } from '../components/Definition.js';
 
 const TIERS: RhymeResult['tier'][] = ['perfect', 'multi', 'slant', 'assonance'];
 const TIER_LABEL: Record<string, string> = {
@@ -99,10 +100,11 @@ export function SearchView({ word, setWord }: { word: string; setWord: (w: strin
       </div>
 
       <div className="field" style={{ marginBottom: 12 }}>
-        <span className="lead">🔍</span>
+        <span className="lead" aria-hidden="true">🔍</span>
         <input
           value={word}
           autoFocus
+          aria-label="Word to search"
           placeholder="Type a word — try “position”, “money”, or slang like “drip”"
           onChange={(e) => setWord(e.target.value)}
         />
@@ -111,8 +113,8 @@ export function SearchView({ word, setWord }: { word: string; setWord: (w: strin
 
       <div className="row wrap" style={{ marginBottom: 14, justifyContent: 'space-between' }}>
         <div className="chip-toggle">
-          <button className={mode === 'rhymes' ? 'on' : ''} onClick={() => setMode('rhymes')}>Rhymes</button>
-          <button className={mode === 'homophones' ? 'on' : ''} onClick={() => setMode('homophones')}>Homophones</button>
+          <button className={mode === 'rhymes' ? 'on' : ''} aria-pressed={mode === 'rhymes'} onClick={() => setMode('rhymes')}>Rhymes</button>
+          <button className={mode === 'homophones' ? 'on' : ''} aria-pressed={mode === 'homophones'} onClick={() => setMode('homophones')}>Homophones</button>
         </div>
         {pron && (
           <div className="row" style={{ gap: 10 }}>
@@ -121,6 +123,8 @@ export function SearchView({ word, setWord }: { word: string; setWord: (w: strin
           </div>
         )}
       </div>
+
+      <Definition word={word} />
 
       {mode === 'rhymes' && (
         <>
@@ -134,13 +138,15 @@ export function SearchView({ word, setWord }: { word: string; setWord: (w: strin
                 max={1}
                 step={0.01}
                 value={distance}
+                aria-label="Rhyme distance, exact to experimental"
+                aria-valuetext={`${distanceLabel(distance)}, ${totalShown} results`}
                 onChange={(e) => setDistance(parseFloat(e.target.value))}
               />
               <div className="slider-scale">
                 <span>Exact</span><span>Strong</span><span>Loose</span><span>Experimental</span>
               </div>
             </div>
-            <div className="hint" style={{ marginTop: 4 }}>{distanceLabel(distance)} · {totalShown} results</div>
+            <div className="hint" style={{ marginTop: 4 }} role="status" aria-live="polite">{distanceLabel(distance)} · {totalShown} results</div>
           </div>
 
           {!word.trim() && <EmptyState icon="🎧">Start typing to explore the sound-space.</EmptyState>}
@@ -215,8 +221,8 @@ export function SearchView({ word, setWord }: { word: string; setWord: (w: strin
           {soundOpen && (
             <div style={{ marginTop: 12 }}>
               <div className="chip-toggle" style={{ marginBottom: 10 }}>
-                <button className={lockMode === 'lock' ? 'on' : ''} onClick={() => { setLockMode('lock'); lockScope('clear'); }}>🔒 Lock &amp; vary the rest</button>
-                <button className={lockMode === 'subst' ? 'on' : ''} onClick={() => { setLockMode('subst'); lockScope('clear'); }}>🔁 Substitute one sound</button>
+                <button className={lockMode === 'lock' ? 'on' : ''} aria-pressed={lockMode === 'lock'} onClick={() => { setLockMode('lock'); lockScope('clear'); }}>🔒 Lock &amp; vary the rest</button>
+                <button className={lockMode === 'subst' ? 'on' : ''} aria-pressed={lockMode === 'subst'} onClick={() => { setLockMode('subst'); lockScope('clear'); }}>🔁 Substitute one sound</button>
               </div>
               <div className="hint" style={{ marginBottom: 8 }}>
                 {lockMode === 'lock'

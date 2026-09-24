@@ -4,16 +4,26 @@ import { readFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { RhymeEngine } from '../dist/index.js';
 
-// Real CMU data + frequency asset live in the app's public folder.
+// Test against exactly what the app ships: the compact lexicon in public/data.
 const dataDir = fileURLToPath(new URL('../../../apps/workbench/public/data/', import.meta.url));
+const srcDir = fileURLToPath(new URL('../../../data-src/', import.meta.url));
 const eng = new RhymeEngine();
 
 before(() => {
-  eng.load(
-    readFileSync(dataDir + 'cmudict.dict', 'utf8'),
-    readFileSync(dataDir + 'freq.txt', 'utf8'),
-  );
-  assert.ok(eng.wordCount > 100000, 'dictionary loaded');
+  eng.load(readFileSync(dataDir + 'lexicon.txt', 'utf8'));
+  assert.ok(eng.wordCount > 60000, 'dictionary loaded');
+});
+
+test('compact lexicon decodes identically to the CMU source, with names filtered out', () => {
+  const raw = new RhymeEngine();
+  raw.load(readFileSync(srcDir + 'cmudict.dict', 'utf8'), readFileSync(srcDir + 'freq.txt', 'utf8'));
+  for (const w of ['position', 'money', 'organization', 'designed', 'orange', 'a', 'read', 'tessellation', 'cats']) {
+    assert.deepEqual(eng.resolve(w)?.phones, raw.resolve(w)?.phones, `${w} phones`);
+    assert.equal(eng.commonness(w).toFixed(6), raw.commonness(w).toFixed(6), `${w} rank`);
+    assert.deepEqual(eng.lex.pronsOf(w).map((p) => p.phones.join(' ')), raw.lex.pronsOf(w).map((p) => p.phones.join(' ')), `${w} variants`);
+  }
+  // surnames / brands are gone from the dictionary (they fall through to G2P)
+  for (const w of ['bhatt', 'arnatt', 'balyeat']) assert.equal(eng.lex.has(w), false, `${w} filtered`);
 });
 
 const words = (rs) => rs.map((r) => r.word);

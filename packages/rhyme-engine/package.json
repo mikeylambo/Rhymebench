@@ -1,6 +1,6 @@
 {
   "name": "@rhyme/engine",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "Shared phonetic engine for Rhyme Workbench and Barsmith. Framework-free.",
   "type": "module",
   "license": "MIT",
@@ -13,7 +13,10 @@
   },
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
-  "files": ["dist", "src"],
+  "files": [
+    "dist",
+    "src"
+  ],
   "scripts": {
     "build": "tsc -p tsconfig.json",
     "test": "npm run build && node --test test/*.test.mjs"

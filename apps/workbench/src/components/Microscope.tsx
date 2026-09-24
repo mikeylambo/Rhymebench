@@ -43,7 +43,7 @@ export function Microscope({
               .filter(Boolean)
               .join(' ');
             return (
-              <button key={it.idx} className={cls} onClick={() => onToggle(it.idx)} title={`${it.role}${g.stress === 1 && it.vowel ? ' · primary stress' : ''}`}>
+              <button key={it.idx} className={cls} onClick={() => onToggle(it.idx)} aria-pressed={!!on} aria-label={`${it.arp}, ${it.vowel && g.stress === 1 ? 'stressed vowel' : it.role}${on ? (mode === 'lock' ? ', locked' : ', substituting') : ''}`} title={`${it.role}${g.stress === 1 && it.vowel ? ' · primary stress' : ''}`}>
                 {on && mode === 'lock' && <span className="lockicon">🔒</span>}
                 <span className="arp">{it.arp}</span>
                 <span className="role">{it.vowel && g.stress === 1 ? 'stress' : it.role}</span>

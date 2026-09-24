@@ -50,31 +50,44 @@ Build for production:
 npm run build      # builds the engine, then the app
 ```
 
-Test the engine:
+Tests:
 
 ```bash
-npm run test       # builds the engine, then node --test over packages/rhyme-engine
+npm test           # engine: builds it, then 25 Node tests against the shipped dictionary
+npm run test:e2e   # app: builds it, then 11 end-to-end tests in your installed Chrome
 ```
+
+Before a release, see [docs/RELEASE-CHECKLIST.md](docs/RELEASE-CHECKLIST.md) and
+[RELEASE_NOTES.md](RELEASE_NOTES.md).
 
 ## Data strategy
 
-The engine resolves every word through a three-stage fallback chain, all
-bundled client-side — no server calls, no API dependency:
+Everything the engine needs is bundled with the app — no server calls, no API.
+Every word resolves through a three-stage fallback chain:
 
-1. **CMU Pronouncing Dictionary** (public domain, ARPAbet, ~135k words) —
-   `apps/workbench/public/data/cmudict.dict`, the primary lookup.
+1. **The pronunciation dictionary** — `apps/workbench/public/data/lexicon.txt`
+   (577 KB gzipped), built from the **CMU Pronouncing Dictionary** (BSD-2-Clause)
+   by `scripts/build-lexicon.mjs`: one character per phoneme, frequency rank
+   inline, and filtered to real English words — 65,714 of CMU's 124,911
+   headwords. The rest were surnames, brands and place names (*bhatt*, *arnatt*),
+   the noise that used to crowd loose rhyme lists. Sources live in `data-src/`.
 2. **Slang + curated supplement** — `packages/rhyme-engine/src/slang.ts`:
-   a hand-curated map of modern slang / rap vocabulary and contractions,
-   **seeded directly from Barsmith's own `pronunciation-extra.json`** (its
-   curated CMU-gap loanwords and coinages) plus a slang block. Grows over time
-   as gaps surface, same pattern as Barsmith's word-bank JSON assets.
-3. **Rule-based G2P fallback** — `packages/rhyme-engine/src/g2p.ts`, a
-   grapheme-to-phoneme heuristic for anything still out-of-vocabulary
-   (names, invented words, new slang).
+   modern slang, rap vocabulary and contractions, plus CMU-gap loanwords and
+   coinages **seeded from Barsmith's `pronunciation-extra.json`**. Grows as gaps
+   surface.
+3. **Rule-based G2P fallback** — `packages/rhyme-engine/src/g2p.ts`, for anything
+   still out of vocabulary (names, invented words, new slang).
 
-A compact word-frequency asset (`public/data/freq.txt`, top ~60k words from the
-Norvig unigram counts) ranks common, usable words above obscure surnames within
-each quality band — so `cat` leads with *bat / chat / flat*, not *bhatt*.
+Frequency ranks (from Peter Norvig's unigram counts) put common, usable words
+first within each quality band — `cat` leads with *bat / chat / flat*.
+
+**Definitions** — `public/data/definitions.txt`, 15,223 words from **Princeton
+WordNet 3.0** (the 20,000 most common words plus everything Barsmith defines),
+built by `scripts/build-definitions.mjs`. Inflections fall back to their base
+(*designed* → *design*). Lazy-loaded on first lookup.
+
+The licence notices for CMU, WordNet and the Inter font ship with the app at
+`/licenses.txt`.
 
 ## The 12 features
 
@@ -124,17 +137,27 @@ token-based) rather than inventing a new design language.
 
 ## Offline / PWA
 
-The app is installable and works offline. A service worker (`public/sw.js`,
-registered in production only) runtime-caches the shell, the hashed JS/CSS and
-the data payloads, so from the second visit on it runs with no network — matching
-the local-first, stores-nothing-off-device promise. `public/manifest.webmanifest`
-+ `public/icon.svg` make it installable to a home screen.
+Installable, and fully offline **from the first visit**. The service worker is
+generated at build time (`scripts/inject-sw-precache.mjs`, ported from
+Barsmith) with this build's exact hashed bundle names, so installing it caches
+the whole app — shell, bundles, font, icons, dictionary and definitions. Its
+cache name includes a hash of those files, so any change replaces the cache.
+Only the app itself is stored as the offline shell (not the privacy page).
+PNG and maskable icons, a share card and a privacy policy are in `public/`
+(regenerate the images with `scripts/make-brand-assets.mjs`).
+
+## Your data
+
+Everything is stored in the browser on your device. **Data & about** (top bar)
+downloads a full backup and restores one — validated before anything is written,
+and undoable, because the current data is snapshotted first. If the app ever
+crashes, the crash screen still offers the backup download.
 
 ## Performance — the engine runs in a Web Worker
 
-The engine and the 3.5MB dictionary live in a Web Worker
+The engine, the dictionary and the definitions live in a Web Worker
 (`src/engine.worker.ts`), driven from the main thread through an async proxy
-(`src/lib/engineClient.ts`). The ~1s parse at startup and every query run off
+(`src/lib/engineClient.ts`). The parse at startup and every query run off
 the main thread, so the UI never janks; the distance slider still filters a
 cached result set client-side for instant re-ranking.
 
@@ -144,14 +167,25 @@ Works from phone width up. Below 640px the left rail becomes a bottom tab bar,
 the layout collapses to a single column with a 16px gutter and no horizontal
 scroll, and the palette stacks beneath the content.
 
+## Accessibility
+
+Every control has an accessible name; result words and pins are keyboard
+reachable; rhyme tiers are spoken, not just coloured; toggles, sliders and result
+counts announce their state; the Data dialog traps focus and returns it on
+Escape. Text meets 4.5:1 contrast, reduced motion is respected, and there is a
+skip link. The e2e suite checks the names and the focus trap on every tab.
+
 ## Tests
 
-`npm run test` (in `packages/rhyme-engine`) builds the engine and runs the
-Node test suite (`test/*.test.mjs`) against the real dictionary. It encodes
-each feature's "done when" bar — tiering, distance monotonicity, that locked
-segments are genuinely preserved, substitution minimal-pairs, homophones,
-multi-builder buckets, and non-adjacent internal-rhyme clusters — plus the G2P
-suffix rules and articulatory scoring.
+- **Engine** (`npm test`): 25 Node tests against the shipped dictionary — each
+  feature's "done when" bar (tiering, distance monotonicity, genuinely preserved
+  locked segments, substitution minimal pairs, homophones, multi buckets,
+  non-adjacent internal rhymes, the Write playground), G2P rules, scoring, and
+  that the compact dictionary decodes exactly like the CMU source.
+- **App** (`npm run test:e2e`): 11 Playwright tests against the production build
+  in real Chrome — the Write loop, search, persistence, backup / restore / undo,
+  malformed-backup rejection, the crash screen, accessibility, phone layout, and
+  booting and searching offline through the service worker.
 
 ## Notes / next steps
 

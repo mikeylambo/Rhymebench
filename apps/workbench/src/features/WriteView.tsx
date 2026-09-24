@@ -3,6 +3,7 @@ import type { GeneratedLine, PlayAction, PlaygroundResult, PlayMode } from '@rhy
 import { useStore } from '../lib/store.js';
 import { load, save, usePersistentState } from '../lib/storage.js';
 import { EmptyState, Spinner, TierHeader, WordChip } from '../components/ui.js';
+import { Definition } from '../components/Definition.js';
 
 /**
  * Write — the SlantSmith surface fused onto the engine. Type up to four lines,
@@ -271,6 +272,7 @@ export function WriteView() {
             rows={4}
             value={text}
             placeholder="I got money on my mind"
+            aria-describedby="write-input-hint"
             onChange={(e) => setText(e.target.value.split('\n').slice(0, MAX_LINES).join('\n'))}
             onKeyDown={(e) => {
               if ((e.metaKey || e.ctrlKey) && e.key === 'Enter') {
@@ -280,10 +282,14 @@ export function WriteView() {
             }}
           />
 
+          <p id="write-input-hint" className="hint" style={{ marginTop: 6 }}>
+            Up to four lines. Tap any word below to explore it · <span className="kbd">Ctrl</span>/<span className="kbd">⌘</span>+<span className="kbd">Enter</span> finds rhymes.
+          </p>
+
           <label className="lbl">Action</label>
           <div className="seg">
             {ACTIONS.map((a) => (
-              <button key={a.id} className={`btn tiny ${prefs.action === a.id ? 'on' : ''}`} onClick={() => setPref('action', a.id)}>
+              <button key={a.id} className={`btn tiny ${prefs.action === a.id ? 'on' : ''}`} aria-pressed={prefs.action === a.id} onClick={() => setPref('action', a.id)}>
                 {a.label}
               </button>
             ))}
@@ -294,19 +300,19 @@ export function WriteView() {
             <label className="lbl" htmlFor="write-syll">Syllable difficulty</label>
             <b className="dial">{prefs.syllables === 0 ? 'Auto' : `${prefs.syllables}-syl`}</b>
           </div>
-          <input id="write-syll" type="range" className="plain" min={0} max={12} value={prefs.syllables} onChange={(e) => setPref('syllables', Number(e.target.value))} />
+          <input id="write-syll" type="range" className="plain" min={0} max={12} value={prefs.syllables} aria-valuetext={prefs.syllables === 0 ? 'Auto, any length' : `${prefs.syllables}-syllable rhymes`} onChange={(e) => setPref('syllables', Number(e.target.value))} />
 
           <div className="row between">
             <label className="lbl" htmlFor="write-density">Rhyme density</label>
             <b className="dial">{DENSITY[prefs.density]}</b>
           </div>
-          <input id="write-density" type="range" className="plain" min={1} max={5} value={prefs.density} onChange={(e) => setPref('density', Number(e.target.value))} />
+          <input id="write-density" type="range" className="plain" min={1} max={5} value={prefs.density} aria-valuetext={DENSITY[prefs.density]} onChange={(e) => setPref('density', Number(e.target.value))} />
 
           <div className="row between">
             <label className="lbl">Lines</label>
             <div className="chip-toggle">
               {[2, 4, 6].map((n) => (
-                <button key={n} className={prefs.count === n ? 'on' : ''} onClick={() => setPref('count', n)}>{n}</button>
+                <button key={n} className={prefs.count === n ? 'on' : ''} aria-pressed={prefs.count === n} onClick={() => setPref('count', n)}>{n}</button>
               ))}
             </div>
           </div>
@@ -324,7 +330,7 @@ export function WriteView() {
               <p className="panel-title" style={{ margin: 0 }}>Explore the sounds</p>
               {busy && <Spinner />}
             </div>
-            <div className="hint" style={{ marginTop: 4 }}>{status}</div>
+            <div className="hint" style={{ marginTop: 4 }} role="status" aria-live="polite">{status}</div>
 
             {tokens.some((l) => l.length) ? (
               <div className="token-lines">
@@ -338,6 +344,7 @@ export function WriteView() {
                           <button
                             key={tok.index}
                             className={`tok ${active ? 'active' : ''}`}
+                            aria-pressed={active}
                             style={color ? { color, boxShadow: `inset 0 -2px 0 ${color}` } : undefined}
                             onClick={() => select(tok)}
                           >
@@ -355,7 +362,7 @@ export function WriteView() {
 
             <div className="chip-toggle wrap">
               {MODES.map((m) => (
-                <button key={m.id} title={m.hint} className={prefs.mode === m.id ? 'on' : ''} onClick={() => setPref('mode', m.id)}>
+                <button key={m.id} title={m.hint} className={prefs.mode === m.id ? 'on' : ''} aria-pressed={prefs.mode === m.id} onClick={() => setPref('mode', m.id)}>
                   {m.label}
                 </button>
               ))}
@@ -388,6 +395,7 @@ export function WriteView() {
               )}
 
               <div className="panel">
+                <Definition word={result.target} />
                 <TierHeader label={prefs.syllables ? `Sound targets · ${prefs.syllables}-syllable` : 'Sound targets'} count={targets.length} />
                 <div className="hint" style={{ marginBottom: 8 }}>Tap to swap into your line · ☆ to pin</div>
                 {targets.length === 0 ? (

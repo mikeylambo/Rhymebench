@@ -55,9 +55,9 @@ export function StoreProvider({ children }: { children: ReactNode }) {
   const [families, setFamilies] = useState<Family[]>(() => load<Family[]>('families', []));
   const [schemes, setSchemesState] = useState<Scheme[]>(() => load<Scheme[]>('schemes', []));
 
-  useEffect(() => save('pins', pins), [pins]);
-  useEffect(() => save('families', families), [families]);
-  useEffect(() => save('schemes', schemes), [schemes]);
+  useEffect(() => { save('pins', pins); }, [pins]);
+  useEffect(() => { save('families', families); }, [families]);
+  useEffect(() => { save('schemes', schemes); }, [schemes]);
 
   useEffect(() => {
     if (loadStarted) {

@@ -8,7 +8,7 @@
  * Improvements to pronunciation coverage or scoring benefit both products at
  * once; nothing here imports a UI framework.
  */
-export const ENGINE_VERSION = '0.1.0';
+export const ENGINE_VERSION = '0.2.0';
 
 export * from './arpabet.js';
 export * from './pronunciation.js';
@@ -21,7 +21,7 @@ export { Lexicon } from './lexicon.js';
 export { SLANG, CURATED, SUPPLEMENT } from './slang.js';
 export { g2p } from './g2p.js';
 
-import { Lexicon } from './lexicon.js';
+import { COMPACT_HEADER, Lexicon } from './lexicon.js';
 import type { Pron } from './pronunciation.js';
 import {
   compareRimes as _compareRimes,
@@ -58,12 +58,14 @@ export class RhymeEngine {
   readonly lex = new Lexicon();
 
   /**
-   * Load the raw cmudict.dict text (fetched by the host app), and optionally a
-   * frequency asset (one word per line, most-common first) used to rank
-   * common/usable words above obscure ones.
+   * Load pronunciation data. Accepts the compact payload built by
+   * scripts/build-lexicon.mjs (pronunciations + frequency ranks in one file —
+   * what the app ships), or a raw cmudict.dict plus an optional frequency list
+   * (one word per line, most common first).
    */
   load(dictText: string, freqText?: string): void {
-    this.lex.loadFromDict(dictText);
+    if (dictText.startsWith(COMPACT_HEADER)) this.lex.loadCompact(dictText);
+    else this.lex.loadFromDict(dictText);
     if (freqText) this.lex.loadFrequencies(freqText);
   }
 
