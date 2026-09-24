@@ -2,9 +2,28 @@
 
 A standalone tool for exploring the **sound-space** around a word or phrase in
 depth. Where Barsmith trains the writer under pressure, this exists for
-unhurried exploration. **No AI writing assistance** — the tool shows the
-sound-space, the writer does the writing. Local-first, offline, stores nothing
-off-device.
+unhurried exploration. No AI or network: the rhymes come from the phonetic
+engine, and the optional generated lines are template-built idea-starters on
+those real rhymes — the writer still writes the bar. Local-first, offline,
+stores nothing off-device.
+
+## Write — the default screen
+
+The line-first surface from **SlantSmith**, fused onto the engine. Type up to
+four lines, tap any word, and get both halves at once:
+
+- **Sound targets** — real rhymes for the tapped word, shaped by mode
+  (Best / Clean / Slant / Weird) and the **syllable-difficulty** dial (Auto, or
+  only N-syllable rhymes). Tap one to swap it into your line.
+- **Generated lines** — bars that land on those same real targets, fitted to
+  your line's syllable count, one different end rhyme per line. The rhymes are
+  real; only the connective filler is templated, so treat them as sparks.
+
+Actions: **Find Slants**, **Find Internals** (colours the words in your lines
+by rhyme cluster), **Densify** (phrase-level targets + lines packed with rhyme,
+via the density dial). **Use** turns a generated line into your next line and
+explores its last word; **Chain** / **Chain 4 bars** builds a rhyme chain you
+can copy or send to the Pad. The deeper tools sit one tab over.
 
 Sibling to Barsmith, built on a shared, versioned phonetic engine
 (`@rhyme/engine`). Barsmith consumes a restrained slice of that engine
@@ -34,7 +53,7 @@ npm run build      # builds the engine, then the app
 Test the engine:
 
 ```bash
-npm run test       # tsc + node --test over packages/rhyme-engine
+npm run test       # builds the engine, then node --test over packages/rhyme-engine
 ```
 
 ## Data strategy

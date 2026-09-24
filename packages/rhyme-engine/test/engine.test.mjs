@@ -152,3 +152,58 @@ test('curated + slang supplement resolves CMU-gap words', () => {
   assert.equal(eng.resolve('quesadilla')?.source, 'slang');
   assert.equal(eng.resolve('wockesha')?.source, 'slang');
 });
+
+// ── Write playground (SlantSmith surface on the engine) ──
+const LINE = 'I got money on my mind';
+
+test('countSyllables is phonetic', () => {
+  assert.equal(eng.countSyllables(LINE), 7);
+  assert.equal(eng.countSyllables('elevation'), 4);
+});
+
+test('playground returns sound targets AND generated lines built on them', () => {
+  const r = eng.playground({ text: LINE, target: 'mind', count: 4 });
+  assert.equal(r.lineSyllables, 7);
+  assert.ok(r.targets.length > 10, 'sound targets');
+  assert.equal(r.lines.length, 4, 'requested line count');
+  const targetWords = new Set(r.targets.map((t) => t.word));
+  for (const l of r.lines) {
+    for (const w of l.rhymes) assert.ok(l.text.toLowerCase().includes(w.toLowerCase()), `"${l.text}" uses ${w}`);
+    assert.ok(targetWords.has(l.rhymes[0]), `end rhyme ${l.rhymes[0]} is a real engine target`);
+  }
+  // a rhyme chain: each line lands on a different end rhyme
+  assert.equal(new Set(r.lines.map((l) => l.rhymes[0])).size, r.lines.length);
+});
+
+test('syllable difficulty returns only N-syllable targets', () => {
+  const r = eng.playground({ text: 'elevation', target: 'elevation', syllables: 4 });
+  assert.ok(r.targets.length > 3);
+  for (const t of r.targets) assert.equal(t.pron.count, 4, `${t.word} is 4 syllables`);
+});
+
+test('Clean mode keeps only perfect rhymes and multis', () => {
+  const r = eng.playground({ text: LINE, target: 'mind', mode: 'clean' });
+  assert.ok(r.targets.length > 0);
+  for (const t of r.targets) assert.ok(t.tier === 'perfect' || t.tier === 'multi', `${t.word} is ${t.tier}`);
+});
+
+test('Densify packs several real rhymes per line and returns phrase targets', () => {
+  const r = eng.playground({ text: LINE, target: 'mind', action: 'dense', density: 5, count: 4 });
+  assert.ok(r.lines.length > 0);
+  for (const l of r.lines) assert.ok(l.rhymes.length >= 3, `"${l.text}" carries ${l.rhymes.length} rhymes`);
+  assert.deepEqual(r.phraseSource, ['my', 'mind']);
+});
+
+test('Internals reports what already rhymes inside the line', () => {
+  const r = eng.playground({ text: LINE, target: 'mind', action: 'internals' });
+  const groups = r.internals.clusters.map((c) => new Set(c.members.map((m) => r.internals.syllables[m].text.toLowerCase())));
+  assert.ok(groups.some((g) => g.has('my') && g.has('mind')), 'my/mind cluster found');
+});
+
+test('seeded: same seed is stable, a new seed gives new ideas', () => {
+  const a = eng.playground({ text: LINE, target: 'mind', seed: 1 }).lines.map((l) => l.text);
+  const b = eng.playground({ text: LINE, target: 'mind', seed: 1 }).lines.map((l) => l.text);
+  const c = eng.playground({ text: LINE, target: 'mind', seed: 2 }).lines.map((l) => l.text);
+  assert.deepEqual(a, b);
+  assert.notDeepEqual(a, c);
+});

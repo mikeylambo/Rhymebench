@@ -10,6 +10,8 @@ import type {
   InternalRhymeResult,
   LockedSearchResult,
   MultiResult,
+  PlaygroundOptions,
+  PlaygroundResult,
   Pron,
   RhymeResult,
   SearchOptions,
@@ -101,4 +103,6 @@ export class EngineClient {
   findRhymes(query: string) { return this.call<FindRhymesResult>('findRhymes', [query]); }
   getUsefulRhymes(word: string, limit?: number) { return this.call<string[]>('getUsefulRhymes', [word, limit]); }
   commonness(word: string) { return this.call<number>('commonness', [word]); }
+  playground(opts: PlaygroundOptions) { return this.call<PlaygroundResult>('playground', [opts]); }
+  countSyllables(text: string) { return this.call<number>('countSyllables', [text]); }
 }

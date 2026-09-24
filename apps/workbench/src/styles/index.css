@@ -284,6 +284,50 @@ input[type="range"].distance::-webkit-slider-thumb {
 
 .kbd { font-family: var(--mono); font-size: 10px; background: var(--bg-panel-2); border: 1px solid var(--line); border-bottom-width: 2px; border-radius: 4px; padding: 1px 5px; color: var(--ink-dim); }
 
+/* ---------- Write (SlantSmith surface) ---------- */
+.main { container: main / inline-size; }
+.write-grid { display: grid; grid-template-columns: minmax(0, 1fr); gap: 14px; }
+.write-results { display: flex; flex-direction: column; gap: 14px; min-width: 0; }
+.write-results .panel + .panel { margin-top: 0; }
+@container main (min-width: 820px) {
+  .write-grid { grid-template-columns: 290px minmax(0, 1fr); align-items: start; }
+  .write-controls { position: sticky; top: 0; }
+}
+.lbl {
+  display: block; font-size: 11px; font-weight: 700; text-transform: uppercase;
+  letter-spacing: 0.6px; color: var(--ink-dim); margin: 14px 0 6px;
+}
+.write-controls > .lbl:first-child { margin-top: 0; }
+.between { justify-content: space-between; }
+.row.between .lbl { margin-bottom: 6px; }
+.dial { font-size: 12px; }
+.seg { display: flex; flex-wrap: wrap; gap: 6px; }
+.seg .btn { flex: 1 1 auto; }
+.btn.on { background: var(--accent); color: var(--accent-ink); border-color: transparent; }
+input[type="range"].plain { width: 100%; accent-color: #ffffff; }
+.actions-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 18px; }
+.chip-toggle.wrap { flex-wrap: wrap; }
+.token-lines { display: flex; flex-direction: column; gap: 6px; margin: 12px 0; }
+.token-line { display: flex; flex-wrap: wrap; gap: 6px; }
+.tok {
+  background: var(--bg-panel-2); border: 1px solid var(--line); border-radius: 8px;
+  padding: 6px 10px; font-size: 14px; font-weight: 600; transition: all 0.1s;
+}
+.tok:hover { border-color: rgba(255, 255, 255, 0.28); }
+.tok.active { border-color: #ffffff; background: rgba(255, 255, 255, 0.12); }
+.gen-line {
+  background: var(--bg-panel-2); border: 1px solid var(--line-soft);
+  border-radius: var(--radius-sm); padding: 12px 14px; margin-top: 10px;
+}
+.gen-text { font-size: 17px; font-weight: 700; line-height: 1.4; }
+.gen-text mark { background: none; color: var(--slant); box-shadow: inset 0 -2px 0 rgba(96, 165, 250, 0.55); }
+.gen-meta { font-size: 11px; color: var(--ink-faint); margin-top: 6px; }
+.gen-actions { display: flex; gap: 6px; margin-top: 10px; }
+.chain-line { display: flex; gap: 10px; align-items: baseline; padding: 7px 0; border-bottom: 1px solid var(--line-soft); font-size: 14px; }
+.chain-line b { color: var(--ink-faint); font-family: var(--mono); font-size: 11px; min-width: 16px; }
+.chain-line .x { margin-left: auto; opacity: 0.6; border: none; background: none; color: var(--ink-faint); }
+.chain-line .x:hover { opacity: 1; color: var(--ink); }
+
 /* ---------- responsive: tablet ---------- */
 @media (max-width: 980px) {
   .body { grid-template-columns: 62px 1fr; }
@@ -300,10 +344,14 @@ input[type="range"].distance::-webkit-slider-thumb {
 
 /* ---------- responsive: phone ---------- */
 @media (max-width: 640px) {
+  /* one natural page scroll on phones: content, then the palette, with the
+     tab bar fixed and the header sticky — no nested scroll regions */
+  .app { height: auto; min-height: 100%; }
+  .topbar { position: sticky; top: 0; z-index: 15; }
   .body,
-  .body.no-rail { display: flex; flex-direction: column; min-height: 0; }
-  .main { order: 1; flex: 1 1 auto; padding: 16px 16px 84px; }
-  .sidepanel { order: 2; }
+  .body.no-rail { display: block; }
+  .main { overflow: visible; padding: 16px 16px 24px; }
+  .sidepanel { overflow: visible; }
   /* left rail becomes a fixed bottom tab bar */
   .rail {
     order: 3;
@@ -320,7 +368,7 @@ input[type="range"].distance::-webkit-slider-thumb {
     background: #0a0a0a;
   }
   .rail button { width: auto; flex: 1 1 0; height: 44px; }
-  .sidepanel { flex-direction: column; margin-bottom: 60px; }
+  .sidepanel { flex-direction: column; margin-bottom: 72px; }
   .sidepanel .side-section { flex: none; border-right: none; border-bottom: 1px solid var(--line); }
   .topbar { padding: 9px 14px; }
   .brand .tag { display: none; }

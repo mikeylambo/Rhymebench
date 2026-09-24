@@ -6,10 +6,12 @@ import { MultiBuilderView } from './features/MultiBuilderView.js';
 import { InternalRhymeView } from './features/InternalRhymeView.js';
 import { SchemeView } from './features/SchemeView.js';
 import { ScratchpadView } from './features/ScratchpadView.js';
+import { WriteView } from './features/WriteView.js';
 
-type Tab = 'search' | 'multi' | 'internal' | 'scheme' | 'scratch';
+type Tab = 'write' | 'search' | 'multi' | 'internal' | 'scheme' | 'scratch';
 
 const TABS: Array<{ id: Tab; glyph: string; label: string }> = [
+  { id: 'write', glyph: '✍️', label: 'Write' },
   { id: 'search', glyph: '🔎', label: 'Search' },
   { id: 'multi', glyph: '🎛️', label: 'Multi' },
   { id: 'internal', glyph: '🧵', label: 'Internal' },
@@ -30,7 +32,7 @@ function Loader() {
 
 export default function App() {
   const { status } = useStore();
-  const [tab, setTab] = useState<Tab>('search');
+  const [tab, setTab] = useState<Tab>('write');
   const [word, setWord] = useState('position');
 
   const goSearch = (w: string) => {
@@ -46,7 +48,7 @@ export default function App() {
     );
   }
 
-  const showRail = tab === 'search' || tab === 'multi' || tab === 'scheme' || tab === 'scratch';
+  const showRail = tab !== 'internal';
 
   return (
     <div className="app">
@@ -73,6 +75,7 @@ export default function App() {
         </nav>
 
         <main className="main">
+          {tab === 'write' && <WriteView />}
           {tab === 'search' && <SearchView word={word} setWord={setWord} />}
           {tab === 'multi' && <MultiBuilderView />}
           {tab === 'internal' && <InternalRhymeView />}

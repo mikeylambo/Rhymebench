@@ -16,6 +16,7 @@ export * from './scoring.js';
 export * from './search.js';
 export * from './phrase.js';
 export * from './internal.js';
+export * from './compose.js';
 export { Lexicon } from './lexicon.js';
 export { SLANG, CURATED, SUPPLEMENT } from './slang.js';
 export { g2p } from './g2p.js';
@@ -42,6 +43,12 @@ import {
 } from './search.js';
 import { buildMultis, phraseMatch as _phraseMatch, type MultiResult } from './phrase.js';
 import { findInternalRhymes, type InternalRhymeResult } from './internal.js';
+import {
+  countSyllables as _countSyllables,
+  playground as _playground,
+  type PlaygroundOptions,
+  type PlaygroundResult,
+} from './compose.js';
 
 /**
  * Stateful convenience wrapper that binds a loaded {@link Lexicon} to the
@@ -143,6 +150,16 @@ export class RhymeEngine {
 
   findInternalRhymes(line: string, threshold?: number): InternalRhymeResult {
     return findInternalRhymes(this.lex, line, threshold);
+  }
+
+  /** The Write playground: sound targets + generated lines for a tapped word. */
+  playground(opts: PlaygroundOptions): PlaygroundResult {
+    return _playground(this.lex, opts);
+  }
+
+  /** Phonetic syllable count of any text. */
+  countSyllables(text: string): number {
+    return _countSyllables(this.lex, text);
   }
 
   scoreCandidate(target: string, candidate: string): CandidateScore | null {
